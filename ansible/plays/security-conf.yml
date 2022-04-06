@@ -1,0 +1,64 @@
+---
+
+- name: Fix some security issues
+  connection: ssh
+  gather_facts: false
+  become_method: su
+  become_user: root
+  hosts: all
+  tasks:
+    - name: Check if securetty exists
+      stat:
+        path: /etc/securetty
+      register: stat_securetty
+
+    - name: Add securetty file
+      become: yes
+      copy:
+        src: "./configs/securetty"
+        dest: /etc/securetty
+        mode: '0644'
+      when: stat_securetty.stat.exists
+
+    - name: Disable ICMP redirect
+      become: yes
+      vars:
+        sysctl_config:
+          net.ipv4.conf.all.accept_redirects: 0
+          net.ipv4.conf.default.accept_redirects: 0
+          net.ipv4.conf.all.secure_redirects: 0
+          net.ipv4.conf.default.secure_redirects: 0
+      sysctl:
+        name: '{{ item.key }}'
+        value: '{{ item.value }}'
+        sysctl_file: /etc/sysctl.d/10-icmp-redirect.conf
+        reload: yes
+      with_dict: '{{ sysctl_config }}'
+
+    - name: Configure ssh
+      become: yes
+      vars:
+        sshd_config:
+          PermitRootLogin: 'no'
+          PermitEmptyPasswords: 'no'
+          PermitUserEnvironment: 'no'
+          UsePam: 'yes'
+          X11Forwarding: 'no'
+          MaxAuthTries: '4'
+          IgnoreRhosts: 'yes'
+          HostbasedAuthentication: 'no'
+          LoginGraceTime: '60'
+          Ciphers: 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'
+          MACs: 'hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256'
+          KexAlgorithms: 'curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256'
+
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: "^(#)?{{item.key}}"
+        line: "{{item.key}} {{item.value}}"
+        state: present
+      with_dict: '{{ sshd_config }}'
+
+    - name: Ensure home is750
+      become: yes
+      command: 'find /home/ -maxdepth 1 -mindepth 1 -not -name local -exec chmod 0750 {} \;'
