@@ -1,0 +1,27 @@
+# Ansible playbook to upgrade the server
+# Usage: ansible-playbook ansible-upgrade-server.yaml -e "reboot=true"
+---
+- hosts: all
+  become: yes
+  become_method: su
+  become_user: root
+  connection: ssh
+  tasks:
+    - name: Update all packages to their latest version
+      apt:
+        update_cache: yes
+        name: "*"
+        state: latest
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+        purge: yes
+    - name: Reboot the server
+      command: systemctl reboot
+      async: 1
+      poll: 0
+      when: reboot is defined
+    
+

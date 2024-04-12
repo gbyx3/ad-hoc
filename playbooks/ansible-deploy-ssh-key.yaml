@@ -1,0 +1,15 @@
+# Ansible playbook to deploy SSH key to authorized_keys file on remote hosts
+# Usage: ansible-playbook -i hosts ansible-deploy-ssh-key.yaml --ask-pass --ask-become-pass -e "user=ansible"
+---
+- hosts: all
+  become: yes
+  become_method: su
+  connection: ssh
+  tasks:
+    - name: Deploy SSH key to authorized_keys file
+      authorized_key:
+        user    : "{{ user }}"
+        key     : "{{ lookup('file', './id_rsa.pub') }}"
+        state   : present
+        path    : /home/{{ user }}/.ssh/authorized_keys
+        manage_dir: yes
