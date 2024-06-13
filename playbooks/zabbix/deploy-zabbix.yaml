@@ -1,0 +1,53 @@
+# This playbook will deploy Zabbix agent on the target hosts
+# Usage: ansible-playbook deploy-zabbix.yaml -e "zabbix_server=<IP>" -e "zabbix_apikey=<API_KEY>" -e "zabbix_apiurl=https://<URL>/api_jsonrpc.php"
+
+---
+- hosts: all
+  connection: local
+  tasks:
+    - name: Assert that the zabbix variables are defined
+      assert:
+        that:
+          - zabbix_server is defined
+          - zabbix_apikey is defined
+          - zabbix_apiurl is defined
+
+- hosts: all
+  become: yes
+  become_method: su
+  become_user: root
+  connection: ssh
+  tasks:
+    - name: Install Zabbix agent
+      package:
+        update_cache: true
+        name: zabbix-agent
+        state: present
+
+    - name: Configure Zabbix agent
+      template:
+        src: zabbix_agentd.conf.j2
+        dest: /etc/zabbix/zabbix_agentd.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Start and enable Zabbix agent
+      service:
+        name: zabbix-agent
+        state: started
+        enabled: yes
+
+    - name: Create host in zabbix
+      uri:
+        url: "{{ zabbix_apiurl }}"
+        validate_certs: yes
+        follow_redirects: none
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer {{ zabix_apikey }}"
+        method: POST
+        body_format: json
+        body: " {{ lookup('template','zabbix_create_host.j2') | to_json }} "
+        return_content: true
+        timeout: 50

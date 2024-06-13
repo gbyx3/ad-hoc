@@ -1,0 +1,35 @@
+{
+    "jsonrpc": "2.0",
+    "method": "host.create",
+    "params": {
+        "host": "{{ ansible_fqdn }}",
+        "interfaces": [
+            {
+                "type": 1,
+                "main": 1,
+                "useip": 1,
+                "ip": "{{ ansible_default_ipv4.address }}",
+                "dns": "",
+                "port": "10050"
+            }
+        ],
+        "groups": [
+            {
+                "groupid": "2"
+            }
+        ],
+        "tags": [
+        ],
+        "templates": [
+            {
+                "templateid": "10001"
+            }
+        ],
+        "macros": [
+        ],
+        "inventory_mode": 1,
+        "inventory": {
+        }
+    },
+    "id": 1
+}
