@@ -1,0 +1,48 @@
+# Ansible playpoook to join a Linux host to an Active Directory domain
+# Usage: ansible-playbook ansible-sssd-join.yaml -e "domain=example.com user=administrator"
+
+# Required packages
+#
+---
+- hosts: all
+  connection: local
+  tasks:
+    - name: Assert that domain, user, and password are defined
+      assert:
+        that:
+          - domain is defined
+          - user is defined
+          - password is defined
+
+- hosts: all
+  become: yes
+  become_method: su
+  become_user: root
+  connection: ssh
+  tasks:
+    - name: Install sssd and dependencies
+      apt:
+        pkg:
+          - realmd
+          - sssd
+          - sssd-tools
+          - libnss-sss
+          - libpam-sss
+          - adcli
+          - packagekit
+        install_recommends: false
+        state: present
+        update_cache: true
+
+    - name: Add password to textfile
+      template:
+        src: joinpassword.j2
+        dest: /tmp/joinpassword.txt
+
+    - name: Join domain
+      shell: 'cat /tmp/joinpassword.txt | /usr/sbin/realm join {{ domain }} --unattended -U {{ user }}'
+
+    - name: Delete passwordfile
+      file:
+        path: /tmp/joinpassword.txt
+        state: absent
