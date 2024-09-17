@@ -1,2 +1,3 @@
 env/
 playbooks/sssd-join/joinpassword.j2
+playbooks/sssd-join/sssd.conf.j2
