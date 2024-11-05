@@ -1,0 +1,39 @@
+# This playbook will deploy the Wazuh agent on the target hosts
+# and configure the agent to communicate with the Wazuh manager.
+# Example command: ansible-playbook deploy_wazuh.yaml -i hosts -u root -e "wazuh_manager_ip=x.x.x.x"
+
+
+# First download the Wazuh agent installation package
+---
+- hosts: all
+  become: yes
+  become_method: su
+  become_user: root
+  connection: ssh
+  vars:
+    wazuh_agent_version: "4.8.0-1"
+    wazuh_version: "4.x"
+  tasks:
+    - name: Download Wazuh agent installation package
+      get_url:
+        url: "https://packages.wazuh.com/{{ wazuh_version }}/apt/pool/main/w/wazuh-agent/wazuh-agent_{{ wazuh_agent_version }}_amd64.deb"
+        dest: /tmp/wazuh-agent.deb
+
+    - name: Install Wazuh agent
+      shell: "WAZUH_MANAGER='{{ wazuh_manager_ip }}' dpkg -i /tmp/wazuh-agent.deb"
+      environment:
+        PATH: "/bin:/usr/bin:/sbin:/usr/sbin"
+
+    - name: Reload systemd manager configuration
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable Wazuh agent service
+      systemd:
+        name: wazuh-agent
+        enabled: yes
+
+    - name: Start Wazuh agent service
+      systemd:
+        name: wazuh-agent
+        state: started
