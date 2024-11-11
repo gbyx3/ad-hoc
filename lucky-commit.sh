@@ -15,7 +15,7 @@ if [[ $# -ne 1 ]]; then
     exit 1
 fi
 
-MATCH="ga"
+MATCH="ea"
 if ! is_hex $MATCH; then
     echo "The match string is not a valid hex string"
     echo "Converting to hex string"
