@@ -27,9 +27,9 @@ MESSAGE=$1
 while true; do
     commit_hash=$(sha1sum <<< "$MESSAGE" | cut -c1-$LENGTH)
     if [[ $commit_hash == $MATCH ]]; then
-        echo "Lucky commit: $MESSAGE|<- "
+        echo "Lucky commit: ->|$MESSAGE|<- "
         exit 0
     fi
     MESSAGE="$MESSAGE "
-    echo "$commit_hash"
+    #echo "$commit_hash"
 done
