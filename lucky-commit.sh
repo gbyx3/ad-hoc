@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Generate commit message to be lucky
 # Based on a X-thread "demanding" a commit hash with a specific prefix
+# 
+# This was a error on my part, 
+# forgeting that it's not only the message that is part of the hash...
+# This will not work for the original problem, but it's a fun script to play with
 
 function is_hex() {
     if [[ $1 =~ ^[0-9a-fA-F]+$ ]]; then
@@ -31,5 +35,5 @@ while true; do
         exit 0
     fi
     MESSAGE="$MESSAGE "
-    #echo "$commit_hash"
+    echo "$commit_hash"
 done
